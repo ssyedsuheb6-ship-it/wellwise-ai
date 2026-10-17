@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { supabase, supabaseConfigured } from '@/lib/supabase';
 type Product={id:string;name:string;variant:string|null;intended_use:string|null;directions:string|null;precautions:string|null;expected_results:string|null;source_url:string|null;verified_at:string|null;review_status:string};
 type Checkin={id:string;date:string;product:string;used:string;clear:string;note:string};
