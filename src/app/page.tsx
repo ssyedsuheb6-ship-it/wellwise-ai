@@ -44,6 +44,34 @@ function money(value: number | null) {
   return `₹${value.toLocaleString('en-IN')}`;
 }
 
+// Only add a URL here after confirming that it is the exact official Be Bodywise product page.
+const VERIFIED_OFFICIAL_PRODUCT_URLS: Record<string, string> = {
+  '1% Salicylic Acid Body Wash - 100 mL':
+    'https://bebodywise.com/product/1-salicylic-acid-body-wash-100ml',
+  '1% Ketoconazole Anti-Dandruff Shampoo (250ml)':
+    'https://bebodywise.com/product/1-ketoconazole-dandruff-shampoo-250ml-xp',
+};
+
+function officialProductUrl(product: Product): string | null {
+  const curated = VERIFIED_OFFICIAL_PRODUCT_URLS[product.name];
+  if (curated) return curated;
+
+  // Accept database URLs only when they point to Be Bodywise's official domain.
+  if (product.source_url) {
+    try {
+      const url = new URL(product.source_url);
+      if (url.protocol === 'https:' &&
+          (url.hostname === 'bebodywise.com' || url.hostname === 'www.bebodywise.com') &&
+          url.pathname.startsWith('/product/')) {
+        return url.toString();
+      }
+    } catch {
+      // Ignore malformed or non-HTTPS URLs.
+    }
+  }
+  return null;
+}
+
 export default function Home() {
   const [tab, setTab] = useState<Tab>('guidance');
   const [products, setProducts] = useState<Product[]>([]);
@@ -326,32 +354,47 @@ export default function Home() {
                     </p>
                   </div>
                 ) : (
-                  filtered.map((item) => (
-                    <button
-                      key={item.id}
-                      className="secondary"
-                      style={{
-                        display: 'flex',
-                        width: '100%',
-                        justifyContent: 'space-between',
-                        marginTop: 10,
-                        textAlign: 'left',
-                        gap: 12,
-                      }}
-                      onClick={() => setSelected(item)}
-                    >
-                      <span>
-                        <strong>{item.name}</strong>
-                        <br />
-                        <span className="muted">
-                          {[item.concern, item.size_label, item.key_ingredient]
-                            .filter(Boolean)
-                            .join(' · ') || item.variant || 'Product details listed'}
-                        </span>
-                      </span>
-                      <span aria-hidden="true">↗</span>
-                    </button>
-                  ))
+                  filtered.map((item) => {
+                    const officialUrl = officialProductUrl(item);
+                    return (
+                      <div key={item.id}>
+                        <button
+                          className="secondary"
+                          style={{
+                            display: 'flex',
+                            width: '100%',
+                            justifyContent: 'space-between',
+                            marginTop: 10,
+                            textAlign: 'left',
+                            gap: 12,
+                          }}
+                          onClick={() => setSelected(item)}
+                        >
+                          <span>
+                            <strong>{item.name}</strong>
+                            <br />
+                            <span className="muted">
+                              {[item.concern, item.size_label, item.key_ingredient]
+                                .filter(Boolean)
+                                .join(' · ') || item.variant || 'Product details listed'}
+                            </span>
+                          </span>
+                          <span aria-hidden="true">↗</span>
+                        </button>
+                        {officialUrl ? (
+                          <p style={{ margin: '4px 0 8px 4px' }}>
+                            <a href={officialUrl} target="_blank" rel="noopener noreferrer">
+                              View official product page ↗
+                            </a>
+                          </p>
+                        ) : (
+                          <p className="muted" style={{ margin: '4px 0 8px 4px', fontSize: 12 }}>
+                            Official product link not verified yet.
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })
                 )}
               </section>
 
@@ -413,11 +456,19 @@ export default function Home() {
                       </p>
                     )}
 
-                    {selected.source_url && (
+                    {officialProductUrl(selected) ? (
                       <p>
-                        <a href={selected.source_url} target="_blank" rel="noreferrer">
-                          Open source information ↗
+                        <a
+                          href={officialProductUrl(selected) as string}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          View official product page ↗
                         </a>
+                      </p>
+                    ) : (
+                      <p className="muted">
+                        Official product link not verified yet. We will add it once the exact product page is confirmed.
                       </p>
                     )}
                     <button className="primary" onClick={() => setTab('assistant')}>
