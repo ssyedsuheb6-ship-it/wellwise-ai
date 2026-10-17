@@ -231,7 +231,9 @@ export default function Home() {
   const [checkins, setCheckins] = useState<Checkin[]>([]);
   const [notice, setNotice] = useState('');
 
-  const [product, setProduct] = useState('');
+  const [checkinProductQuery, setCheckinProductQuery] = useState('');
+  const [checkinProductOpen, setCheckinProductOpen] = useState(false);
+  const [selectedCheckinProduct, setSelectedCheckinProduct] = useState<Product | null>(null);
   const [used, setUsed] = useState('yes');
   const [clear, setClear] = useState('yes');
   const [note, setNote] = useState('');
@@ -311,6 +313,26 @@ export default function Home() {
     );
   }, [products, query]);
 
+  const checkinProductOptions = useMemo(() => {
+    const term = checkinProductQuery.toLowerCase().trim();
+    const matches = !term
+      ? products
+      : products.filter((item) =>
+          [item.name, item.variant, item.size_label, item.concern, item.key_ingredient]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase()
+            .includes(term),
+        );
+    return matches;
+  }, [products, checkinProductQuery]);
+
+  function checkinProductLabel(item: Product) {
+    return [item.name, item.variant, item.size_label]
+      .filter((value, index, values) => Boolean(value) && values.indexOf(value) === index)
+      .join(' — ');
+  }
+
   function save(next: Checkin[]) {
     setCheckins(next);
     try {
@@ -323,20 +345,25 @@ export default function Home() {
 
   function submitCheckin(event: FormEvent) {
     event.preventDefault();
-    if (!product.trim()) return;
+    if (!selectedCheckinProduct) {
+      setNotice('Please search for and select a product from the catalogue.');
+      return;
+    }
 
     save([
       {
         id: crypto.randomUUID(),
         date: new Date().toISOString().slice(0, 10),
-        product: product.trim(),
+        product: checkinProductLabel(selectedCheckinProduct),
         used,
         clear,
         note: note.trim(),
       },
       ...checkins,
     ]);
-    setProduct('');
+    setCheckinProductQuery('');
+    setSelectedCheckinProduct(null);
+    setCheckinProductOpen(false);
     setNote('');
   }
 
@@ -644,17 +671,93 @@ export default function Home() {
                 <h3>New check-in</h3>
                 <p className="muted">Saved in this browser only. Not uploaded or shared.</p>
                 <form className="stack" onSubmit={submitCheckin}>
-                  <label className="label">
-                    Product name
+                  <div className="label" style={{ position: 'relative' }}>
+                    <label htmlFor="checkin-product-search">Product name *</label>
                     <input
+                      id="checkin-product-search"
                       className="field"
                       required
-                      maxLength={120}
-                      value={product}
-                      onChange={(event) => setProduct(event.target.value)}
-                      placeholder="Name printed on your product"
+                      autoComplete="off"
+                      role="combobox"
+                      aria-autocomplete="list"
+                      aria-expanded={checkinProductOpen}
+                      aria-controls="checkin-product-options"
+                      value={checkinProductQuery}
+                      onFocus={() => setCheckinProductOpen(true)}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setCheckinProductQuery(value);
+                                            setSelectedCheckinProduct(null);
+                        setCheckinProductOpen(true);
+                      }}
+                      placeholder={loading ? 'Loading catalogue products…' : 'Search all catalogue products'}
+                      disabled={loading || Boolean(catalogueError) || products.length === 0}
                     />
-                  </label>
+                    {checkinProductOpen && !loading && !catalogueError && (
+                      <div
+                        id="checkin-product-options"
+                        role="listbox"
+                        aria-label="Catalogue products"
+                        style={{
+                          position: 'absolute',
+                          zIndex: 20,
+                          top: '100%',
+                          left: 0,
+                          right: 0,
+                          maxHeight: 240,
+                          overflowY: 'auto',
+                          background: 'var(--panel, #fff)',
+                          border: '1px solid var(--border, #d8ded8)',
+                          borderRadius: 8,
+                          boxShadow: '0 8px 20px rgba(0,0,0,0.10)',
+                        }}
+                      >
+                        {checkinProductOptions.length > 0 ? checkinProductOptions.map((item) => (
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={selectedCheckinProduct?.id === item.id}
+                            key={item.id}
+                            className="secondary"
+                            style={{
+                              display: 'block',
+                              width: '100%',
+                              border: 0,
+                              borderRadius: 0,
+                              textAlign: 'left',
+                              padding: '10px 12px',
+                            }}
+                            onClick={() => {
+                              setSelectedCheckinProduct(item);
+                              setCheckinProductQuery(checkinProductLabel(item));
+                              setCheckinProductOpen(false);
+                            }}
+                          >
+                            <strong>{item.name}</strong>
+                            {(item.variant || item.size_label) && (
+                              <span className="muted" style={{ display: 'block', fontSize: 12 }}>
+                                {[item.variant, item.size_label].filter(Boolean).join(' · ')}
+                              </span>
+                            )}
+                          </button>
+                        )) : (
+                          <p className="muted" style={{ padding: '10px 12px', margin: 0 }}>
+                            No matching products. Try another search.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    {selectedCheckinProduct && (
+                      <p className="muted" style={{ fontSize: 12, margin: '6px 0 0' }}>
+                        Selected: {checkinProductLabel(selectedCheckinProduct)}
+                      </p>
+                    )}
+                    {catalogueError && (
+                      <p className="muted" role="alert" style={{ fontSize: 12 }}>
+                        The catalogue must load before you can select a product.
+                      </p>
+                    )}
+                  </div>
                   <label className="label">
                     Did you use it today?
                     <select className="field" value={used} onChange={(event) => setUsed(event.target.value)}>
