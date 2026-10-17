@@ -161,7 +161,6 @@ function officialProductUrl(product: Product): string | null {
     'urea skin heel repair kit': 'urea skin heel repair kit 75ml',
     'strawberry skin exfoliation kit': 'sabodywash scrub',
     'daily sun shield kit': 'face body sunscreen kit',
-    'advanced hair growth serum roll on pack of 2': 'hair growth serum roll on 2 months xp',
     '1 peptide ceramide moisturizer': '1 peptide ceramide moisturizer',
     'keratin conditioner': 'deep moisturizing conditioner',
     '2 salicylic acid face wash 100 ml': '2 salicylic acid face wash',
