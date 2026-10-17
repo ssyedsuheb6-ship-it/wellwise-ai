@@ -154,15 +154,31 @@ export async function POST(request: NextRequest) {
 
     const payload = (await response.json().catch(() => null)) as GeminiResponse | null;
     if (!response.ok) {
-      // Do not return provider details or the API key to the browser.
-      const status = response.status === 429 ? 429 : response.status === 400 ? 502 : 502;
+      // Log only provider status/code/message. Never log the API key or user question.
+      const providerMessage = payload?.error?.message || 'No provider error message returned';
+      const providerStatus = payload?.error?.status || 'UNKNOWN';
+      console.error('[WELLWISE Gemini API error]', {
+        httpStatus: response.status,
+        providerStatus,
+        message: providerMessage.slice(0, 500),
+        model,
+      });
+
+      if (response.status === 429) {
+        return NextResponse.json(
+          { error: 'The Gemini service is busy or its current usage limit has been reached. Please try again later.' },
+          { status: 429 },
+        );
+      }
+      if (response.status === 401 || response.status === 403) {
+        return NextResponse.json(
+          { error: 'Gemini rejected the API configuration. Please check the server-side Gemini API key and project access.' },
+          { status: 503 },
+        );
+      }
       return NextResponse.json(
-        {
-          error: response.status === 429
-            ? 'The Gemini service is busy or its current usage limit has been reached. Please try again later.'
-            : 'The assistant could not complete the request. Please try again later.',
-        },
-        { status },
+        { error: 'The assistant could not complete the request. Please try again later.' },
+        { status: 502 },
       );
     }
 
@@ -179,7 +195,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ answer, sourceUrl });
-  } catch {
+  } catch (error: unknown) {
+    // Log a safe diagnostic without exposing secrets or user content.
+    const message = error instanceof Error ? error.message : 'Unknown non-Error exception';
+    console.error('[WELLWISE Gemini request exception]', message.slice(0, 500));
     return NextResponse.json(
       { error: 'The assistant could not connect to Gemini. Please try again later.' },
       { status: 502 },
