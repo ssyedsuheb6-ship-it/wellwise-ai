@@ -671,7 +671,7 @@ export default function Home() {
                 <h3>New check-in</h3>
                 <p className="muted">Saved in this browser only. Not uploaded or shared.</p>
                 <form className="stack" onSubmit={submitCheckin}>
-                  <div className="label" style={{ position: 'relative' }}>
+                  <div className="label checkin-product-field">
                     <label htmlFor="checkin-product-search">Product name *</label>
                     <input
                       id="checkin-product-search"
@@ -687,29 +687,32 @@ export default function Home() {
                       onChange={(event) => {
                         const value = event.target.value;
                         setCheckinProductQuery(value);
-                                            setSelectedCheckinProduct(null);
+                        setSelectedCheckinProduct(null);
                         setCheckinProductOpen(true);
                       }}
                       placeholder={loading ? 'Loading catalogue products…' : 'Search all catalogue products'}
                       disabled={loading || Boolean(catalogueError) || products.length === 0}
                     />
+                    {/* Keep the options in normal document flow: absolute positioning made them overlap later fields. */}
                     {checkinProductOpen && !loading && !catalogueError && (
                       <div
                         id="checkin-product-options"
                         role="listbox"
                         aria-label="Catalogue products"
                         style={{
-                          position: 'absolute',
-                          zIndex: 20,
-                          top: '100%',
-                          left: 0,
-                          right: 0,
+                          position: 'relative',
+                          zIndex: 2,
+                          display: 'block',
+                          width: '100%',
+                          minWidth: 0,
                           maxHeight: 240,
                           overflowY: 'auto',
-                          background: 'var(--panel, #fff)',
-                          border: '1px solid var(--border, #d8ded8)',
-                          borderRadius: 8,
-                          boxShadow: '0 8px 20px rgba(0,0,0,0.10)',
+                          overflowX: 'hidden',
+                          overscrollBehavior: 'contain',
+                          background: '#ffffff',
+                          border: '1px solid #d8e4d8',
+                          borderRadius: 12,
+                          boxShadow: '0 8px 20px rgba(0,0,0,0.08)',
                         }}
                       >
                         {checkinProductOptions.length > 0 ? checkinProductOptions.map((item) => (
@@ -722,10 +725,16 @@ export default function Home() {
                             style={{
                               display: 'block',
                               width: '100%',
+                              minWidth: 0,
                               border: 0,
+                              borderBottom: '1px solid #edf1ed',
                               borderRadius: 0,
                               textAlign: 'left',
-                              padding: '10px 12px',
+                              whiteSpace: 'normal',
+                              overflowWrap: 'anywhere',
+                              padding: '12px 14px',
+                              background: selectedCheckinProduct?.id === item.id ? '#eaf1eb' : '#ffffff',
+                              color: '#202a25',
                             }}
                             onClick={() => {
                               setSelectedCheckinProduct(item);
