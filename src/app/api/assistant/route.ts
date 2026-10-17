@@ -81,22 +81,58 @@ export async function POST(req: NextRequest) {
       },
     );
 
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error('[WELLWISE Gemini API error]', response.status, errorBody);
+   
+if (!response.ok) {
+  const errorBody = await response.text();
 
-      if (response.status === 429) {
-        return NextResponse.json(
-          { error: 'The free AI usage limit may have been reached. Please try again later.' },
-          { status: 503 },
-        );
-      }
+  console.error(
+    '[WELLWISE Gemini API error]',
+    response.status,
+    errorBody,
+  );
 
-      return NextResponse.json(
-        { error: 'The AI service could not complete the request. Please try again later.' },
-        { status: 502 },
-      );
-    }
+  let apiError: {
+    error?: {
+      status?: string;
+      message?: string;
+    };
+  } = {};
+
+  try {
+    apiError = JSON.parse(errorBody);
+  } catch {
+    // Keep the fallback message if the response is not valid JSON.
+  }
+
+  const errorStatus = apiError.error?.status || '';
+  const errorMessage = apiError.error?.message || '';
+
+  const quotaExceeded =
+    response.status === 429 ||
+    errorStatus === 'RESOURCE_EXHAUSTED' ||
+    /quota|rate.?limit|requests per day|requests per minute/i.test(
+      errorMessage,
+    );
+
+  if (quotaExceeded) {
+    return NextResponse.json(
+      {
+        error:
+          'You have reached the current free AI usage limit. Please try again later when your quota resets. No payment is required to continue using the free tier within its limits.',
+      },
+      { status: 503 },
+    );
+  }
+
+  return NextResponse.json(
+    {
+      error:
+        'WELLWISE AI is temporarily unable to answer. Please try again later.',
+    },
+    { status: 502 },
+  );
+}
+
 
     const result = await response.json();
 
