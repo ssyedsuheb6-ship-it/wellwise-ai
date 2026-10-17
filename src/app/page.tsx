@@ -40,34 +40,168 @@ type Tab = 'guidance' | 'tracker' | 'assistant' | 'about';
 const KEY = 'wellwise-checkins-v1';
 
 function money(value: number | null) {
-  if (value === null || value === undefined) return 'Not listed';
+  if (value === null || value === undefined) return 'Check the official product page';
   return `₹${value.toLocaleString('en-IN')}`;
 }
 
-// Only add a URL here after confirming that it is the exact official Be Bodywise product page.
-const VERIFIED_OFFICIAL_PRODUCT_URLS: Record<string, string> = {
-  '1% Salicylic Acid Body Wash - 100 mL':
-    'https://bebodywise.com/product/1-salicylic-acid-body-wash-100ml',
-  '1% Ketoconazole Anti-Dandruff Shampoo (250ml)':
-    'https://bebodywise.com/product/1-ketoconazole-dandruff-shampoo-250ml-xp',
+// Official product URLs supplied and confirmed by the user.
+// Matching uses normalised product names and explicit aliases to avoid sending
+// customers to a different size, fragrance, or bundle.
+const OFFICIAL_PRODUCT_URLS: Record<string, string> = {
+  'hair health gummies': 'https://bebodywise.com/product/hair-health-gummies?widgetSourceId=shop-product-card-grid',
+  'hair growth serum roll on': 'https://bebodywise.com/product/hair-growth-serum-roll-on?widgetSourceId=shop-product-card-grid',
+  '20 urea roll on 50ml': 'https://bebodywise.com/product/20-urea-roll-on-50ml?widgetSourceId=shop-product-card-grid',
+  'salicylic ceramide bodywash': 'https://bebodywise.com/product/salicylic-ceramide-bodywash?widgetSourceId=shop-product-card-grid',
+  '5 aha bha bodywash 700ml': 'https://bebodywise.com/product/5-aha-bha-bodywash-700ml?widgetSourceId=shop-product-card-grid',
+  '6 aha bha underarm roll on flora 75ml': 'https://bebodywise.com/product/6-aha-bha-underarm-roll-on-flora-75ml?widgetSourceId=shop-product-card-grid',
+  'body sunscreen lotion with spf 50': 'https://bebodywise.com/product/body-sunscreen-lotion-with-spf-50?widgetSourceId=shop-product-card-grid',
+  'hair growth pack rosemary roll on xp 2': 'https://bebodywise.com/product/hair-growth-pack-rosemary-roll-on-xp-2?widgetSourceId=shop-product-card-grid',
+  'folli advanced plus hair growth serum': 'https://bebodywise.com/product/folli-advanced-plus-hair-growth-serum?widgetSourceId=shop-product-card-grid',
+  '1 zpto anti dandruff shampoo': 'https://bebodywise.com/product/1-zpto-anti-dandruff-shampoo?widgetSourceId=shop-product-card-grid',
+  'sun care duo head to toe': 'https://bebodywise.com/product/sun-care-duo-head-to-toe?widgetSourceId=shop-product-card-grid',
+  '20 urea lotion xp': 'https://bebodywise.com/product/20-urea-lotion-xp?widgetSourceId=shop-product-card-grid',
+  'anti stretch mark roll on': 'https://bebodywise.com/product/anti-stretch-mark-roll-on?widgetSourceId=shop-product-card-grid',
+  '1 salicylic acid body wash': 'https://bebodywise.com/product/1-salicylic-acid-body-wash?widgetSourceId=shop-product-card-grid',
+  'hair growth serum spray': 'https://bebodywise.com/product/hair-growth-serum-spray?widgetSourceId=shop-product-card-grid',
+  'triple milk deep hydrating bodywash': 'https://bebodywise.com/product/triple-milk-deep-hydrating-bodywash?widgetSourceId=shop-product-card-grid',
+  '30 urea foot roll on': 'https://bebodywise.com/product/30-urea-foot-roll-on?widgetSourceId=shop-product-card-grid',
+  '4 aha bha underarm roll on': 'https://bebodywise.com/product/4-aha-bha-underarm-roll-on?widgetSourceId=shop-product-card-grid',
+  '10 magnesium lotion 300ml': 'https://bebodywise.com/product/10-magnesium-lotion-300ml?widgetSourceId=shop-product-card-grid',
+  'underarm pigmentation kit no fragrance': 'https://bebodywise.com/product/underarm-pigmentation-kit-no-fragrance?widgetSourceId=shop-product-card-grid',
+  'advanced hair growth serum': 'https://bebodywise.com/product/advanced-hair-growth-serum?widgetSourceId=shop-product-card-grid',
+  '1 ketoconazole dandruff shampoo 250ml': 'https://bebodywise.com/product/1-ketoconazole-dandruff-shampoo-250ml?widgetSourceId=shop-product-card-grid',
+  'magnesium glycinate gummies 60n': 'https://bebodywise.com/product/magnesium-glycinate-gummies-60n?widgetSourceId=shop-product-card-grid',
+  'daily hydration kit': 'https://bebodywise.com/product/daily-hydration-kit?widgetSourceId=shop-product-card-grid',
+  '10 aha body scrub': 'https://bebodywise.com/product/10-aha-body-scrub?widgetSourceId=shop-product-card-grid',
+  'ultra light sunscreen spf50': 'https://bebodywise.com/product/ultra-light-sunscreen-spf50?widgetSourceId=shop-product-card-grid',
+  'body sunscreen spray with spf 50': 'https://bebodywise.com/product/body-sunscreen-spray-with-spf-50?widgetSourceId=shop-product-card-grid',
+  '1 salicylic acid body wash 100ml': 'https://bebodywise.com/product/1-salicylic-acid-body-wash-100ml?widgetSourceId=shop-product-card-grid',
+  'body care mini pack': 'https://bebodywise.com/product/body-care-mini-pack?widgetSourceId=shop-product-card-grid',
+  'urea skin heel repair kit 75ml': 'https://bebodywise.com/product/urea-skin-heel-repair-kit-75ml?widgetSourceId=shop-product-card-grid',
+  'sabodywash scrub': 'https://bebodywise.com/product/sabodywash-scrub?widgetSourceId=shop-product-card-grid',
+  'face body sunscreen kit': 'https://bebodywise.com/product/face-body-sunscreen-kit',
+  'hair growth serum roll on 2 months xp': 'https://bebodywise.com/product/hair-growth-serum-roll-on-2-months-xp',
+  'advanced underarm pigmentation kit': 'https://bebodywise.com/product/advanced-underarm-pigmentation-kit?widgetSourceId=shop-product-card-grid',
+  '1 peptide ceramide moisturizer': 'https://bebodywise.com/product/1-peptide-ceramide-moisturizer',
+  'anti dandruff serum': 'https://bebodywise.com/product/anti-dandruff-serum',
+  'deep moisturizing conditioner': 'https://bebodywise.com/product/deep-moisturizing-conditioner',
+  '2 salicylic acid face wash': 'https://bebodywise.com/product/2-salicylic-acid-face-wash',
+  'calcium gummies': 'https://bebodywise.com/product/calcium-gummies',
+  'pigmentation repair cream': 'https://bebodywise.com/product/pigmentation-repair-cream',
+  '5 lactic acid body lotion': 'https://bebodywise.com/product/5-lactic-acid-body-lotion',
+  '6 aha bha underarm roll on': 'https://bebodywise.com/product/6-aha-bha-underarm-roll-on',
+  'niacinamide body lotion': 'https://bebodywise.com/product/niacinamide-body-lotion',
+  'acne control wash': 'https://bebodywise.com/product/acne-control-wash',
+  '4 aha bha underarm roll on watermelon': 'https://bebodywise.com/product/4-aha-bha-underarm-roll-on-watermelon',
+  '4 aha bha underarm roll on no fragrance': 'https://bebodywise.com/product/4-aha-bha-underarm-roll-on-no-fragrance',
+  'multivitamin gummies': 'https://bebodywise.com/product/multivitamin-gummies',
+  'glycolic acid stick': 'https://bebodywise.com/product/glycolic-acid-stick',
+  'scalp massager': 'https://bebodywise.com/product/scalp-massager',
+  'hair fall control shampoo': 'https://bebodywise.com/product/hair-fall-control-shampoo',
+  'glutathione gummies 60': 'https://bebodywise.com/product/glutathione-gummies-60',
+  '4 aha bha underarm rollon frag free 75': 'https://bebodywise.com/product/4-aha-bha-underarm-rollon-frag-free-75',
+  '12 aha scrub': 'https://bebodywise.com/product/12-aha-scrub',
+  '5 niacinamide body wash': 'https://bebodywise.com/product/5-niacinamide-body-wash',
+  'biotin hair gummies 120': 'https://bebodywise.com/product/biotin-hair-gummies-120',
+  'brow lash serum': 'https://bebodywise.com/product/brow-lash-serum',
+  '10 urea lotion': 'https://bebodywise.com/product/10-urea-lotion',
+  'magnesium gummies and lotion kit': 'https://bebodywise.com/product/magnesium-gummies-and-lotion-kit',
+  'hydrocolloid acne pimple patch': 'https://bebodywise.com/product/hydrocolloid-acne-pimple-patch',
+  'biotin hair gummies breastfeeding moms 30n xp': 'https://bebodywise.com/product/biotin-hair-gummies-breastfeeding-moms-30n-xp',
+  'hair strengthening serum': 'https://bebodywise.com/product/hair-strengthening-serum',
+  'hair magnesium gummies kit 30n': 'https://bebodywise.com/product/hair-magnesium-gummies-kit-30n',
+  '2 5 benzoyl peroxide bodywash': 'https://bebodywise.com/product/2-5-benzoyl-peroxide-bodywash',
+  'aha bha body pack': 'https://bebodywise.com/product/aha-bha-body-pack',
+  'summer essentials kit': 'https://bebodywise.com/product/summer-essentials-kit',
+  'intense dandruff kit': 'https://bebodywise.com/product/intense-dandruff-kit',
+  'collagen skin gummies': 'https://bebodywise.com/product/collagen-skin-gummies',
+  'ice roller': 'https://bebodywise.com/product/ice-roller',
+  'calcium gummies xp': 'https://bebodywise.com/product/calcium-gummies-xp',
+  'lightest mineral sunscreen spf50': 'https://bebodywise.com/product/lightest-mineral-sunscreen-spf50',
+  '1 zpto ads hg30 kit': 'https://bebodywise.com/product/1-zpto-ads-hg30-kit',
+  'dandruff and hairfall kit': 'https://bebodywise.com/product/dandruff-and-hairfall-kit',
+  'strawberry skin pack': 'https://bebodywise.com/product/strawberry-skin-pack',
+  'niacinamide body wash 700': 'https://bebodywise.com/product/niacinamide-body-wash-700',
 };
 
-function officialProductUrl(product: Product): string | null {
-  const curated = VERIFIED_OFFICIAL_PRODUCT_URLS[product.name];
-  if (curated) return curated;
+function normalizeProductName(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().replace(/\s+/g, ' ');
+}
 
-  // Accept database URLs only when they point to Be Bodywise's official domain.
+function officialProductUrl(product: Product): string | null {
+  const name = normalizeProductName(product.name);
+  const aliases: Record<string, string> = {
+    'biotin hair gummies 30 stage 1 hair loss': 'hair health gummies',
+    'biotin hair gummies 30': 'hair health gummies',
+    'advanced hair growth serum roll on pack of 2': 'hair growth serum roll on 2 months xp',
+    '20 urea foot roll on 50 ml': '20 urea roll on 50ml',
+    '1 salicylic ceramide body wash 250 ml': 'salicylic ceramide bodywash',
+    '5 aha bha exfoliating body wash 700ml': '5 aha bha bodywash 700ml',
+    '6 aha bha underarm roll on 75ml flora': '6 aha bha underarm roll on flora 75ml',
+    'de tan spf 50 body sunscreen lotion': 'body sunscreen lotion with spf 50',
+    'advanced hair growth pack with roll on 25ml': 'hair growth pack rosemary roll on xp 2',
+    'folli advanced hair growth serum roll on': 'folli advanced plus hair growth serum',
+    '1 zpto anti dandruff shampoo 200ml': '1 zpto anti dandruff shampoo',
+    'sun care duo for face and body': 'sun care duo head to toe',
+    '20 urea lotion 300ml': '20 urea lotion xp',
+    'anti stretch mark serum roll on': 'anti stretch mark roll on',
+    '1 salicylic acid body wash 250 ml': '1 salicylic acid body wash',
+    'hair growth serum spray 30 ml': 'hair growth serum spray',
+    'triple milk deep hydrating body wash': 'triple milk deep hydrating bodywash',
+    '30 urea foot roll on 50ml': '30 urea foot roll on',
+    '4 aha bha underarm roll on 50 ml flora': '4 aha bha underarm roll on',
+    '10 magnesium body lotion 300 ml': '10 magnesium lotion 300ml',
+    'advanced hair growth serum 50 ml': 'advanced hair growth serum',
+    '1 ketoconazole anti dandruff shampoo 250ml': '1 ketoconazole dandruff shampoo 250ml',
+    '5 in 1 magnesium gummies with glycinate vitamin d3 60n': 'magnesium glycinate gummies 60n',
+    '10 aha body scrub 200g': '10 aha body scrub',
+    'ultra light sunscreen spf50 broad spectrum': 'ultra light sunscreen spf50',
+    'body sunscreen spray with spf 50': 'body sunscreen spray with spf 50',
+    '1 salicylic acid body wash 100 ml': '1 salicylic acid body wash 100ml',
+    'urea skin heel repair kit': 'urea skin heel repair kit 75ml',
+    'strawberry skin exfoliation kit': 'sabodywash scrub',
+    'daily sun shield kit': 'face body sunscreen kit',
+    'advanced hair growth serum roll on pack of 2': 'hair growth serum roll on 2 months xp',
+    '1 peptide ceramide moisturizer': '1 peptide ceramide moisturizer',
+    'keratin conditioner': 'deep moisturizing conditioner',
+    '2 salicylic acid face wash 100 ml': '2 salicylic acid face wash',
+    'calcium gummies 30 pcs': 'calcium gummies',
+    '5 lactic acid body lotion 200 ml': '5 lactic acid body lotion',
+    '6 aha bha underarm roll on 50ml flora': '6 aha bha underarm roll on',
+    '10 niacinamide body lotion 200 ml': 'niacinamide body lotion',
+    '1 salicylic acid face wash foam based': 'acne control wash',
+    '4 aha bha underarm roll on 50 ml watermelon': '4 aha bha underarm roll on watermelon',
+    '4 aha bha underarm roll on 50 ml no fragrance': '4 aha bha underarm roll on no fragrance',
+    '7 glycolic acid exfoliating body stick 30g': 'glycolic acid stick',
+    'keratin shampoo for hair fall': 'hair fall control shampoo',
+    'glutathione gummies 60n': 'glutathione gummies 60',
+    '4 aha bha underarm roll on fragrance free 75 ml': '4 aha bha underarm rollon frag free 75',
+    '12 aha scrub 300gm': '12 aha scrub',
+    '5 niacinamide body wash 250 ml': '5 niacinamide body wash',
+    'brow lash growth serum': 'brow lash serum',
+    '10 urea body lotion 200 ml': '10 urea lotion',
+    'complete magnesium care': 'magnesium gummies and lotion kit',
+    'hair gummies for post pregnancy hair fall 30n': 'biotin hair gummies breastfeeding moms 30n xp',
+    'stress induced hair loss solution': 'hair magnesium gummies kit 30n',
+    '2 5 benzoyl peroxide body wash': '2 5 benzoyl peroxide bodywash',
+    'collagen builder gummies': 'collagen skin gummies',
+    'calcium gummies pack of 2': 'calcium gummies xp',
+    'lightest mineral sunscreen spf 50': 'lightest mineral sunscreen spf50',
+    'anti dandruff hair fall kit': 'dandruff and hairfall kit',
+    'dandruff hairfall kit': 'dandruff and hairfall kit',
+    '5 niacinamide body wash 700 ml': 'niacinamide body wash 700',
+  };
+  const key = aliases[name] || name;
+  if (OFFICIAL_PRODUCT_URLS[key]) return OFFICIAL_PRODUCT_URLS[key];
+
+  // Use an official product URL already saved in Supabase only if its domain/path are valid.
   if (product.source_url) {
     try {
       const url = new URL(product.source_url);
       if (url.protocol === 'https:' &&
           (url.hostname === 'bebodywise.com' || url.hostname === 'www.bebodywise.com') &&
-          url.pathname.startsWith('/product/')) {
-        return url.toString();
-      }
-    } catch {
-      // Ignore malformed or non-HTTPS URLs.
-    }
+          url.pathname.startsWith('/product/')) return url.toString();
+    } catch { /* Ignore malformed or non-official URLs. */ }
   }
   return null;
 }
@@ -425,14 +559,14 @@ export default function Home() {
 
                     <div className="detail">
                       <h4>Product details</h4>
-                      <p><strong>Concern:</strong> {selected.concern || 'Not listed'}</p>
-                      <p><strong>Size:</strong> {selected.size_label || 'Not listed'}</p>
-                      <p><strong>Key ingredient:</strong> {selected.key_ingredient || 'Not listed'}</p>
+                      <p><strong>Concern:</strong> {selected.concern || 'See official product description'}</p>
+                      <p><strong>Size:</strong> {selected.size_label || 'See official product variant'}</p>
+                      <p><strong>Key ingredient:</strong> {selected.key_ingredient || 'See official ingredient list'}</p>
                       <p><strong>Price:</strong> {money(selected.price_inr)}</p>
                       <p><strong>MRP:</strong> {money(selected.mrp_inr)}</p>
-                      <p><strong>Rating:</strong> {selected.rating == null ? 'Not listed' : `${selected.rating}/5`}</p>
-                      <p><strong>Options:</strong> {selected.option_count ?? 'Not listed'}</p>
-                      <p><strong>Availability:</strong> {selected.stock_status || 'Not listed'}</p>
+                      <p><strong>Rating:</strong> {selected.rating == null ? 'See current official listing' : `${selected.rating}/5`}</p>
+                      <p><strong>Options:</strong> {selected.option_count ?? 'See available options on official page'}</p>
+                      <p><strong>Availability:</strong> {selected.stock_status || 'Check live availability on official page'}</p>
                     </div>
 
                     {selected.review_status === 'verified' ? (
