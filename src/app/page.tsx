@@ -54,7 +54,7 @@ export default function Home(){
     <div key={i} className={'message ' + (m.role === 'user' ? 'user' : '')}>
       {m.role === 'assistant' ? (
         <ReactMarkdown>
-          {m.text.replace(/\\([*_`])/g, '$1').replace(/\\:/g, ':')}
+          {m.text.replace(/\\([*_`])/g, '$1').replace(/\\:/g, ':').replace(/\\+$/gm, '')}
         </ReactMarkdown>
       ) : (
         m.text
