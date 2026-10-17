@@ -49,6 +49,7 @@ function money(value: number | null) {
 // customers to a different size, fragrance, or bundle.
 const OFFICIAL_PRODUCT_URLS: Record<string, string> = {
   'hair health gummies': 'https://bebodywise.com/product/hair-health-gummies?widgetSourceId=shop-product-card-grid',
+  '1 salicylic acid body wash 350ml': 'https://bebodywise.com/product/1-salicylic-acid-body-wash-350ml',
   'hair growth serum roll on': 'https://bebodywise.com/product/hair-growth-serum-roll-on?widgetSourceId=shop-product-card-grid',
   '20 urea roll on 50ml': 'https://bebodywise.com/product/20-urea-roll-on-50ml?widgetSourceId=shop-product-card-grid',
   'salicylic ceramide bodywash': 'https://bebodywise.com/product/salicylic-ceramide-bodywash?widgetSourceId=shop-product-card-grid',
@@ -131,6 +132,13 @@ function normalizeProductName(value: string): string {
 function officialProductUrl(product: Product): string | null {
   const name = normalizeProductName(product.name);
   const aliases: Record<string, string> = {
+    '10 niacinamide body lotion': 'niacinamide body lotion',
+    '1 salicylic acid body wash 350 ml': '1 salicylic acid body wash 350ml',
+    'body acne pack': 'body care mini pack',
+    'folli advanced hair growth serum roll on 3 redensyl 3 rosemary 25 ml': 'folli advanced plus hair growth serum',
+    'hair strengthening serum 100ml': 'hair strengthening serum',
+    'ice roller 1 n': 'ice roller',
+    'summer essentials trio': 'summer essentials kit',
     'biotin hair gummies 30 stage 1 hair loss': 'hair health gummies',
     'biotin hair gummies 30': 'hair health gummies',
     'advanced hair growth serum roll on pack of 2': 'hair growth serum roll on 2 months xp',
@@ -190,6 +198,12 @@ function officialProductUrl(product: Product): string | null {
     'dandruff hairfall kit': 'dandruff and hairfall kit',
     '5 niacinamide body wash 700 ml': 'niacinamide body wash 700',
   };
+  // The official site uses different pages for the 25 ml roll-on and 50 ml serum.
+  // Use the size field to avoid sending the 25 ml catalogue item to the 50 ml page.
+  if (name === 'advanced hair growth serum' && /25\s*ml/i.test(product.size_label || '')) {
+    return OFFICIAL_PRODUCT_URLS['hair growth serum roll on'];
+  }
+
   const key = aliases[name] || name;
   if (OFFICIAL_PRODUCT_URLS[key]) return OFFICIAL_PRODUCT_URLS[key];
 
